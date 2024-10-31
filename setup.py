@@ -7,8 +7,8 @@ setup(
     version="1.0.0",
     description="A secure P2P file transfer library with optional encryption and NAT traversal support",
     author="Glimor",
-    author_email="glimor@gmail.com",
-    url="https://github.com/username/nectar2p", 
+    author_email="glimor@proton.me",
+    url="https://github.com/Glimor/Nectar2P", 
     packages=find_packages(),
     install_requires=[
         "cryptography",
