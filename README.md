@@ -1,7 +1,7 @@
 
-# nectar2p
+# Nectar2P
 
-**nectar2p** — A secure and fast open-source Python library for P2P file transfers, featuring optional encryption and NAT traversal support. With nectar2p, you can easily transfer files between devices on the same network or across different networks.
+**Nectar2P** — A secure and fast open-source Python library for P2P file transfers, featuring optional encryption and NAT traversal support. With nectar2p, you can easily transfer files between devices on the same network or across different networks.
 
 ## Features
 
@@ -16,7 +16,6 @@
 `nectar2p` requires Python 3.6+ and depends on the `cryptography` library. Follow these steps to install the project:
 
 ```bash
-# Download or clone the project
 # Install Nectar2P
 pip install nectar2p
 ```
