@@ -5,9 +5,10 @@
 
 ## Features
 
-- **Secure File Transfer**: Provides RSA and AES encryption for secure data transmission.
+- **Secure File Transfer**: Provides RSA and AES-GCM encryption for confidentiality and integrity.
 - **Optional Encryption**: Enable or disable encryption for file transfer as per requirement.
 - **NAT Traversal**: Supports connections between devices behind NATs.
+- **Peer Authentication**: Allows verification of the remote party's RSA public key.
 - **Modular Design**: Easily integrable and customizable for various use cases.
 - **Format Support**: Nectar2P supports all file formats.
 
@@ -40,7 +41,10 @@ from nectar2p.nectar_sender import NectarSender
 def main():
     receiver_host = "public.receiver.ip"
     receiver_port = 5000
-    sender = NectarSender(receiver_host, receiver_port, enable_encryption=True)
+    # optionally verify the receiver's public key
+    expected_receiver_key = b"-----BEGIN PUBLIC KEY-----..."
+    sender = NectarSender(receiver_host, receiver_port, enable_encryption=True,
+                          expected_receiver_public_key=expected_receiver_key)
 
     try:
         sender.initiate_secure_connection()
@@ -60,7 +64,10 @@ from nectar2p.nectar_receiver import NectarReceiver
 def main():
     host = "0.0.0.0"  # Allows connection from any IP
     port = 5000
-    receiver = NectarReceiver(host, port, enable_encryption=True)
+    # optionally verify the sender's public key
+    expected_sender_key = b"-----BEGIN PUBLIC KEY-----..."
+    receiver = NectarReceiver(host, port, enable_encryption=True,
+                              expected_sender_public_key=expected_sender_key)
 
     try:
         receiver.wait_for_sender()
@@ -75,10 +82,11 @@ if __name__ == "__main__":
 ### Using NAT Traversal for Cross-Network Transfers
 
 The `NectarSender` and `NectarReceiver` classes use a STUN server for NAT traversal, allowing direct connections between devices on different networks. Public IP addresses are automatically retrieved through the STUN server.
+The STUN server address can be customized when creating `NATTraversal`. Be aware that the server can observe your public IP address.
 
 ### Enabling/Disabling Encryption
 
-Encryption can be optionally enabled or disabled during file transfer. When `enable_encryption` is set to `True`, RSA and AES encryption are used. When set to `False`, files are transferred without encryption.
+Encryption can be optionally enabled or disabled during file transfer. When `enable_encryption` is set to `True`, RSA and AES-GCM encryption are used. When set to `False`, files are transferred without encryption. Files are transferred in 64&nbsp;KiB chunks and each chunk is authenticated. `Connection.receive_data` enforces a maximum message size of 100&nbsp;MiB by default.
 
 ```python
 # Encryption enabled

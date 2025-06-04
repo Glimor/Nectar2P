@@ -4,9 +4,11 @@ from nectar2p.networking.connection import Connection
 from nectar2p.networking.nat_traversal import NATTraversal
 
 class NectarReceiver:
-    def __init__(self, host: str, port: int, enable_encryption: bool = True):
+    def __init__(self, host: str, port: int, enable_encryption: bool = True,
+                 expected_sender_public_key: bytes | None = None):
         self.connection = Connection(host, port, listen=True)
         self.enable_encryption = enable_encryption
+        self.expected_sender_public_key = expected_sender_public_key
         if self.enable_encryption:
             self.rsa_handler = RSAHandler()
             self.aes_handler = None
@@ -21,8 +23,19 @@ class NectarReceiver:
             print(f"Connection accepted from {self.client_connection.socket.getpeername()}")
             
             if self.enable_encryption:
+                # send our public key
                 public_key = self.rsa_handler.get_public_key()
                 self.client_connection.send_data(public_key)
+
+                # receive sender public key for verification
+                sender_public_key = self.client_connection.receive_data()
+                if sender_public_key is None:
+                    print("Failed to receive sender public key.")
+                    return
+                if self.expected_sender_public_key and sender_public_key != self.expected_sender_public_key:
+                    print("Sender public key mismatch. Aborting connection.")
+                    self.close_connection()
+                    return
 
                 encrypted_aes_key = self.client_connection.receive_data()
                 if encrypted_aes_key is None:
@@ -40,23 +53,22 @@ class NectarReceiver:
             print("No active connection.")
             return
 
-        data = self.client_connection.receive_data()
-        if data is None:
-            print("Failed to receive file data.")
-            return
-
-        if self.enable_encryption and self.aes_handler:
-            try:
-                decrypted_data = self.aes_handler.decrypt(data)
-            except Exception as e:
-                print(f"Decryption error: {e}")
-                return
-        else:
-            decrypted_data = data
-
         try:
             with open(save_path, "wb") as file:
-                file.write(decrypted_data)
+                while True:
+                    data = self.client_connection.receive_data()
+                    if data is None:
+                        print("Failed to receive file data.")
+                        return
+                    if len(data) == 0:
+                        break
+                    if self.enable_encryption and self.aes_handler:
+                        try:
+                            data = self.aes_handler.decrypt(data)
+                        except Exception as e:
+                            print(f"Decryption error: {e}")
+                            return
+                    file.write(data)
         except Exception as e:
             print(f"Error saving file: {e}")
 

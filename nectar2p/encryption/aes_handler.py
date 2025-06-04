@@ -1,4 +1,4 @@
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import os
 
 class AESHandler:
@@ -12,23 +12,15 @@ class AESHandler:
         return self.key
 
     def encrypt(self, data: bytes) -> bytes:
-        iv = os.urandom(16)
-        if len(iv) != 16:
-            raise ValueError("Invalid IV size for AES encryption.")
-        
-        cipher = Cipher(algorithms.AES(self.key), modes.CFB(iv))
-        encryptor = cipher.encryptor()
-        ciphertext = iv + encryptor.update(data) + encryptor.finalize()
-        return ciphertext
+        nonce = os.urandom(12)
+        aesgcm = AESGCM(self.key)
+        ciphertext = aesgcm.encrypt(nonce, data, None)
+        return nonce + ciphertext
 
     def decrypt(self, encrypted_data: bytes) -> bytes:
-        iv = encrypted_data[:16]
-        ciphertext = encrypted_data[16:]
+        nonce = encrypted_data[:12]
+        ciphertext = encrypted_data[12:]
 
-        if len(iv) != 16:
-            raise ValueError("Invalid IV size for AES decryption.")
-        
-        cipher = Cipher(algorithms.AES(self.key), modes.CFB(iv))
-        decryptor = cipher.decryptor()
-        plaintext = decryptor.update(ciphertext) + decryptor.finalize()
+        aesgcm = AESGCM(self.key)
+        plaintext = aesgcm.decrypt(nonce, ciphertext, None)
         return plaintext

@@ -37,13 +37,17 @@ class Connection:
         except Exception as e:
             print(f"Failed to send data: {e}")
 
-    def receive_data(self) -> Optional[bytes]:
+    def receive_data(self, max_size: int = 100 * 1024 * 1024) -> Optional[bytes]:
         try:
             raw_length = self._recv_n_bytes(4)
             if not raw_length:
                 print("Failed to receive data length.")
                 return None
             data_length = int.from_bytes(raw_length, byteorder='big')
+            if data_length > max_size:
+                print("Received data exceeds allowed size. Closing connection.")
+                self.close()
+                return None
 
             data = self._recv_n_bytes(data_length)
             if data is None:
