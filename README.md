@@ -11,6 +11,8 @@
 - **Peer Authentication**: Allows verification of the remote party's RSA public key.
 - **Modular Design**: Easily integrable and customizable for various use cases.
 - **Format Support**: Nectar2P supports all file formats.
+- **Command Line Interface**: `python -m nectar2p` provides simple `send` and `receive` commands with progress display.
+- **Integrity & Resume**: Transfers include SHA-256 verification and can resume from partial files.
 
 ## Installation
 
@@ -30,6 +32,20 @@ pip install nectar2p
 - **NectarReceiver**: Used for receiving files.
 
 These classes support secure file transfer with optional encryption and NAT traversal.
+
+### Command Line Usage
+
+After installing the package you can use a simple CLI:
+
+```bash
+python -m nectar2p receive 0.0.0.0 5000 received.bin --resume
+```
+
+In another terminal:
+
+```bash
+python -m nectar2p send receiver_ip 5000 file.bin
+```
 
 ### Basic Usage
 
@@ -133,3 +149,4 @@ For any questions or suggestions, please feel free to reach out: [glimor@proton.
 ## Support the Project
 
 [![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/glimor)
+

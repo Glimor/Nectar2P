@@ -4,10 +4,13 @@ import random
 from typing import Tuple
 
 class NATTraversal:
-    def __init__(self, stun_server: Tuple[str, int] = ("stun4.l.google.com", 19302)):
+    def __init__(self, stun_server: Tuple[str, int] | None = ("stun4.l.google.com", 19302)):
         self.stun_server = stun_server
 
     def get_public_address(self) -> Tuple[str, int]:
+        if not self.stun_server:
+            return "0.0.0.0", 0
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(10)
         
@@ -19,7 +22,7 @@ class NATTraversal:
         try:
             sock.sendto(stun_msg, self.stun_server)
             data, addr = sock.recvfrom(1024)
-        except socket.timeout:
+        except (socket.timeout, OSError):
             sock.close()
             raise Exception("STUN request timeout")
         
