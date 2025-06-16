@@ -146,7 +146,3 @@ Contributions are welcome! Feel free to submit `pull requests` or open `issues` 
 
 For any questions or suggestions, please feel free to reach out: [glimor@proton.me](mailto:glimor@proton.me)
 
-## Support the Project
-
-[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/glimor)
-
