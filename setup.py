@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="Nectar2P",
-    version="1.1.0",
+    version="1.2.0",
     description="A secure P2P file transfer library with optional encryption and NAT traversal support",
     author="Glimor",
     author_email="glimor@proton.me",

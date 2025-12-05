@@ -1,6 +1,6 @@
 import socket
 import struct
-import random
+import secrets
 from typing import Tuple
 
 class NATTraversal:
@@ -16,7 +16,7 @@ class NATTraversal:
         
         msg_type = 0x0001
         msg_length = 0
-        transaction_id = random.getrandbits(128).to_bytes(16, 'big')
+        transaction_id = secrets.token_bytes(16)
         stun_msg = struct.pack("!HH16s", msg_type, msg_length, transaction_id)
         
         try:

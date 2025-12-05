@@ -36,7 +36,6 @@ class NectarSender:
                 self.close_connection()
                 return
 
-            # send our public key for receiver verification
             self.connection.send_data(self.rsa_handler.get_public_key())
 
             aes_key = self.aes_handler.get_key()
@@ -49,6 +48,10 @@ class NectarSender:
             file_size = os.path.getsize(file_path)
         except FileNotFoundError:
             print(f"File '{file_path}' not found.")
+            return
+        
+        if file_size < 0 or file_size > 10 * 1024 * 1024 * 1024:
+            print("File size exceeds limit (10GB).")
             return
 
         sha256 = hashlib.sha256()
@@ -71,6 +74,9 @@ class NectarSender:
         try:
             ack_json = json.loads(ack.decode())
             start_offset = int(ack_json.get("resume_from", 0))
+            if start_offset < 0 or start_offset > file_size:
+                print("Invalid resume offset.")
+                return
         except Exception:
             print("Invalid acknowledgement from receiver.")
             return
@@ -85,13 +91,12 @@ class NectarSender:
                 if self.enable_encryption:
                     try:
                         chunk = self.aes_handler.encrypt(chunk)
-                    except Exception as e:
-                        print(f"Encryption failed: {e}")
+                    except Exception:
+                        print("Encryption failed.")
                         return
                 self.connection.send_data(chunk)
                 bytes_sent += len(chunk)
                 self._print_progress(bytes_sent, file_size)
-            # send zero-length to mark EOF
             self.connection.send_data(b"")
             self._print_progress(file_size, file_size)
 

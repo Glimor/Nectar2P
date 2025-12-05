@@ -7,12 +7,21 @@ class Connection:
         self.port = port
         self.listen = listen
         self.socket = existing_socket if existing_socket else socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.settimeout(30)
+        
+        try:
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 1024)
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024 * 1024)
+        except Exception:
+            pass
+        
         self.client_socket = None
         self.addr = None
         
         if self.listen:
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.socket.bind((self.host, self.port))
-            self.socket.listen(5)
+            self.socket.listen(1)
 
     def connect(self):
         try:
@@ -41,21 +50,25 @@ class Connection:
         try:
             raw_length = self._recv_n_bytes(4)
             if not raw_length:
-                print("Failed to receive data length.")
+                print("Connection error.")
                 return None
             data_length = int.from_bytes(raw_length, byteorder='big')
-            if data_length > max_size:
-                print("Received data exceeds allowed size. Closing connection.")
+            
+            if data_length > max_size or data_length < 0:
+                print("Invalid data size.")
                 self.close()
                 return None
 
             data = self._recv_n_bytes(data_length)
             if data is None:
-                print("Failed to receive the expected amount of data.")
+                print("Connection error.")
                 return None
             return data
-        except Exception as e:
-            print(f"Failed to receive data: {e}")
+        except socket.timeout:
+            print("Connection timeout.")
+            return None
+        except Exception:
+            print("Connection error.")
             return None
 
     def _recv_n_bytes(self, n: int) -> Optional[bytes]:

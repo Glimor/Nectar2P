@@ -131,6 +131,12 @@ ENV/
 env.bak/
 venv.bak/
 .idea
+
+# PyPI credentials
+.pypirc
+*.pem
+*_key.pem
+*_public.pem
 # Spyder project settings
 .spyderproject
 .spyproject

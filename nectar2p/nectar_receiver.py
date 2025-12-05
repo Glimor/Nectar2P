@@ -2,6 +2,7 @@ import json
 import os
 import hashlib
 import sys
+from pathlib import Path
 from typing import Tuple
 
 from nectar2p.encryption.rsa_handler import RSAHandler
@@ -30,11 +31,9 @@ class NectarReceiver:
             print(f"Connection accepted from {self.client_connection.socket.getpeername()}")
             
             if self.enable_encryption:
-                # send our public key
                 public_key = self.rsa_handler.get_public_key()
                 self.client_connection.send_data(public_key)
 
-                # receive sender public key for verification
                 sender_public_key = self.client_connection.receive_data()
                 if sender_public_key is None:
                     print("Failed to receive sender public key.")
@@ -61,6 +60,17 @@ class NectarReceiver:
             return
 
         try:
+            safe_path = Path(save_path).resolve()
+            current_dir = Path.cwd().resolve()
+            if not str(safe_path).startswith(str(current_dir)):
+                print("Invalid file path.")
+                return
+            save_path = str(safe_path)
+        except Exception:
+            print("Invalid file path.")
+            return
+
+        try:
             meta = self.client_connection.receive_data()
             if meta is None:
                 print("Failed to receive file metadata.")
@@ -70,6 +80,10 @@ class NectarReceiver:
             meta_json = json.loads(meta.decode())
             file_size = int(meta_json.get("size", 0))
             expected_hash = meta_json.get("sha256", "")
+            
+            if file_size < 0 or file_size > 10 * 1024 * 1024 * 1024:
+                print("Invalid file size.")
+                return
 
             received_size = 0
             if resume and os.path.exists(save_path):
@@ -92,8 +106,8 @@ class NectarReceiver:
                     if self.enable_encryption and self.aes_handler:
                         try:
                             data = self.aes_handler.decrypt(data)
-                        except Exception as e:
-                            print(f"Decryption error: {e}")
+                        except Exception:
+                            print("Decryption error.")
                             return
                     file.write(data)
                     bytes_written += len(data)
@@ -110,8 +124,8 @@ class NectarReceiver:
                     sha256.update(chunk)
             if sha256.hexdigest() != expected_hash:
                 print("Warning: file integrity verification failed.")
-        except Exception as e:
-            print(f"Error saving file: {e}")
+        except Exception:
+            print("Error saving file.")
 
     def close_connection(self):
         if self.client_connection:
