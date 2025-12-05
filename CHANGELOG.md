@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.0] - 2024-12-05
+## [1.2.0] - 2025-12-05
 
 ### Security
 - **CRITICAL**: Added MITM attack protection with public key verification
