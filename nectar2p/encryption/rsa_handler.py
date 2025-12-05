@@ -45,7 +45,6 @@ class RSAHandler:
                 )
             )
             return aes_key
-        except Exception as e:
-            print(f"Decryption failed: {e}")
-            print("Invalid Key or File Type")
+        except Exception:
+            print("Decryption failed.")
             return None

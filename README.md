@@ -8,10 +8,11 @@
 - **Secure File Transfer**: Provides RSA and AES-GCM encryption for confidentiality and integrity.
 - **Optional Encryption**: Enable or disable encryption for file transfer as per requirement.
 - **NAT Traversal**: Supports connections between devices behind NATs.
-- **Peer Authentication**: Allows verification of the remote party's RSA public key.
+- **Peer Authentication**: Allows verification of the remote party's RSA public key to prevent MITM attacks.
+- **Security Hardened**: Protection against path traversal, DoS attacks, replay attacks, and other common vulnerabilities.
 - **Modular Design**: Easily integrable and customizable for various use cases.
 - **Format Support**: Nectar2P supports all file formats.
-- **Command Line Interface**: `python -m nectar2p` provides simple `send` and `receive` commands with progress display.
+- **Command Line Interface**: `python -m nectar2p` provides simple `send`, `receive`, and `export-key` commands with progress display.
 - **Integrity & Resume**: Transfers include SHA-256 verification and can resume from partial files.
 
 ## Installation
@@ -37,14 +38,49 @@ These classes support secure file transfer with optional encryption and NAT trav
 
 After installing the package you can use a simple CLI:
 
+#### Basic Transfer
+
 ```bash
+# Start receiver
 python -m nectar2p receive 0.0.0.0 5000 received.bin --resume
 ```
 
 In another terminal:
 
 ```bash
+# Send file
 python -m nectar2p send receiver_ip 5000 file.bin
+```
+
+#### Secure Transfer with Public Key Verification
+
+To prevent Man-in-the-Middle (MITM) attacks, you can verify the identity of the remote party using their public key:
+
+```bash
+# Step 1: Both parties export their public keys
+python -m nectar2p export-key sender_public.pem
+python -m nectar2p export-key receiver_public.pem
+
+# Step 2: Exchange public keys through a secure channel (e.g., in person, encrypted email)
+
+# Step 3: Receiver starts with sender's public key verification
+python -m nectar2p receive 0.0.0.0 5000 received.bin --verify-key sender_public.pem
+
+# Step 4: Sender connects with receiver's public key verification
+python -m nectar2p send receiver_ip 5000 file.bin --verify-key receiver_public.pem
+```
+
+#### Additional Options
+
+```bash
+# Disable encryption (not recommended for sensitive data)
+python -m nectar2p send receiver_ip 5000 file.bin --no-encryption
+
+# Use custom STUN server for NAT traversal
+python -m nectar2p send receiver_ip 5000 file.bin --stun-host stun.example.com --stun-port 3478
+
+# Resume interrupted transfer
+python -m nectar2p receive 0.0.0.0 5000 received.bin --resume
 ```
 
 ### Basic Usage
@@ -104,6 +140,12 @@ The STUN server address can be customized when creating `NATTraversal`. Be aware
 
 Encryption can be optionally enabled or disabled during file transfer. When `enable_encryption` is set to `True`, RSA and AES-GCM encryption are used. When set to `False`, files are transferred without encryption. Files are transferred in 64&nbsp;KiB chunks and each chunk is authenticated. `Connection.receive_data` enforces a maximum message size of 100&nbsp;MiB by default.
 
+**Security Note**: Encryption is strongly recommended for sensitive data. When encryption is enabled, the library uses:
+- RSA-2048 for key exchange
+- AES-256-GCM for data encryption
+- Cryptographically secure random number generation
+- Nonce reuse detection to prevent replay attacks
+
 ```python
 # Encryption enabled
 sender = NectarSender("receiver_ip", 5000, enable_encryption=True)
@@ -111,6 +153,18 @@ sender = NectarSender("receiver_ip", 5000, enable_encryption=True)
 # Encryption disabled
 receiver = NectarReceiver("0.0.0.0", 5000, enable_encryption=False)
 ```
+
+## Security Features
+
+Nectar2P includes multiple security layers to protect your file transfers:
+
+- **MITM Protection**: Public key verification prevents man-in-the-middle attacks
+- **Path Traversal Protection**: Files can only be saved within the working directory
+- **DoS Protection**: Connection timeouts (30s), buffer limits (1MB), and file size limits (10GB)
+- **Replay Attack Protection**: Nonce reuse detection prevents message replay attacks
+- **Input Validation**: Port numbers, file sizes, and offsets are validated
+- **Secure Randomness**: Uses `secrets` module for cryptographic operations
+- **Error Message Security**: Generic error messages prevent information leakage
 
 ## Project Structure
 
